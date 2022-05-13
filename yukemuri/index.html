@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <title>湯けむり</title>
+    <meta name="description" content="供養">
+  </head>
+
+  <body style="background-color: #000;">
+
+    <div id="loading"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+    <script>
+      var block = document.getElementById('loading');
+      var camera, scene, renderer,
+        geometry, material, mesh;
+      init();
+      animate();
+      function init() {
+        clock = new THREE.Clock();
+        renderer = new THREE.WebGLRenderer({
+          alpha: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 0);
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.z = 1000;
+        scene.add(camera);
+
+        geometry = new THREE.CubeGeometry(200, 200, 200);
+        material = new THREE.MeshLambertMaterial({
+          color: 0xFFFFFF,
+          wireframe: false
+        });
+        mesh = new THREE.Mesh(geometry, material);
+        cubeSineDriver = 0;
+
+        textGeo = new THREE.PlaneGeometry(150, 150);
+        THREE.ImageUtils.crossOrigin = '';
+
+        light = new THREE.DirectionalLight(0xFFFFFF, 1);
+        light.position.set(-1, 0, 1);
+        scene.add(light);
+
+        // smokeTexture = THREE.ImageUtils.loadTexture('https://www.wakura.or.jp/assets/img/common/Smoke-Element.png');
+        smokeTexture = THREE.ImageUtils.loadTexture('assets/img/Smoke-Element.png');
+        smokeMaterial = new THREE.MeshBasicMaterial({
+          color: 0xFFFFFF,
+          map: smokeTexture,
+          transparent: true
+        });
+        smokeGeo = new THREE.PlaneGeometry(150, 150);
+        smokeParticles = [];
+
+
+        for (p = 0; p < 150; p++) {
+          var particle = new THREE.Mesh(smokeGeo, smokeMaterial);
+          particle.position.set(Math.random() * 500 - 250, Math.random() * 500 - 250, Math.random() * 1000 - 100);
+          particle.rotation.z = Math.random() * 360;
+          scene.add(particle);
+          smokeParticles.push(particle);
+        }
+        block.appendChild(renderer.domElement);
+      }
+
+      function animate() {
+        delta = clock.getDelta();
+        requestAnimationFrame(animate);
+        evolveSmoke();
+        render();
+      }
+
+      function evolveSmoke() {
+        var sp = smokeParticles.length;
+        while (sp--) {
+          smokeParticles[sp].rotation.z += (delta * 0.2);
+        }
+      }
+
+      function render() {
+        mesh.rotation.x += 0.005;
+        mesh.rotation.y += 0.01;
+        cubeSineDriver += .01;
+        mesh.position.z = 100 + (Math.sin(cubeSineDriver) * 500);
+        renderer.render(scene, camera);
+      }
+
+    </script>
+
+
+  </body>
+</html>
+

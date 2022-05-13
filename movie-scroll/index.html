@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>スライドに合わせて動く動画</title>
+</head>
+
+<body>
+	<section id="container">
+		<video src="movie.mp4" playsinline="true" webkit-playsinline="true" preload="auto" muted="muted" class="video-background"></video>
+Get down 揺れる　廻る　振れる　切ない気持ち　二人で一緒に眠る　Winter Land あなただけ見つめて　私だけ見つめて　明日を誓う
+ぎゅっと　抱かれ　燃える恋心　激しく　舞い散る　雪に包まれて　永遠に愛してる　今日より愛してる　ずっと　Eternal Love
+	</section>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.5.1/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.5.1/ScrollTrigger.min.js"></script>
+<style>
+	/* videoが入る部分はfixedにしないと調整がめんどくさそう...。場合によってはセクションにいる間だけ表示みたいな処理が求められるかも */
+	.video-background {
+		position: fixed;
+		top: 0;
+		left: 0;
+		min-width: 100%;
+		min-height: 100%;
+		z-index: -1;
+	}
+	#container { -ms-writing-mode: tb-rl; writing-mode: vertical-rl; font-size: 7vw; position: relative; height: 2400vh; }
+</style>
+
+<script>
+
+const video = document.querySelector(".video-background");
+let src = video.currentSrc || video.src;
+console.log(video, src);
+
+/* Make sure the video is 'activated' on iOS */
+function once(el, event, fn, opts) {
+	var onceFn = function (e) {
+		el.removeEventListener(event, onceFn);
+		fn.apply(this, arguments);
+	};
+	el.addEventListener(event, onceFn, opts);
+	return onceFn;
+}
+
+// タッチされたら再生されるから殺す。
+once(document.documentElement, "touchstart", function (e) {
+	video.play();
+	video.pause();
+});
+
+/* ---------------------------------- */
+/* Scroll Control! */
+
+gsap.registerPlugin(ScrollTrigger);
+
+// gsapで#containerの上から下までの間でスクロールアニメーションが動くように指示
+let tl = gsap.timeline({
+	defaults: { duration: 1 },
+	scrollTrigger: {
+		trigger: "#container",
+		start: "top top",
+		end: "bottom bottom",
+		scrub: true,
+		markers: true,
+	}
+});
+
+once(video, "loadedmetadata", () => {
+	// スクロールに応じてビデオの再生位置をずらしている。
+	tl.fromTo(
+		video,{
+			currentTime: 0
+		},{
+			currentTime: video.duration || 1
+		}
+	);
+});
+
+setTimeout(function () {
+	if (window["fetch"]) {
+		// videoが読み込みして使えるようになったら発火するイベント
+		fetch(src)
+		.then((response) => response.blob())
+		.then((response) => {
+			var blobURL = URL.createObjectURL(response);
+
+			// video.currentTimeで再生位置を取得できる。
+			var t = video.currentTime;
+			once(document.documentElement, "touchstart", function (e) {
+				video.play();
+				video.pause();
+			});
+
+			// 
+			video.setAttribute("src", blobURL);
+			video.currentTime = t + 0.01;
+		});
+	}
+}, 1000);
+
+/* ---------------------------------- */
+</script>
+
+</html>
+
+
